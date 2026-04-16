@@ -5,7 +5,7 @@ import os
 
 st.title("🧠 Einstein AI Chatbot")
 
-generator = pipeline("text2text-generation", model="google/flan-t5-base")
+generator = pipeline("text-generation", model="gpt2")
 
 def chat(question):
     prompt = f"You are Albert Einstein. Answer wisely: {question}"
