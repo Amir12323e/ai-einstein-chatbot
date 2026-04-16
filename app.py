@@ -1,66 +1,49 @@
 import streamlit as st
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from gtts import gTTS
-import json
 import uuid
-import os
-
-st.set_page_config(page_title="Medical AI Assistant", layout="wide")
 
 st.title("🩺 Medical AI Assistant")
-st.markdown("⚠️ هذا النظام يقدم معلومات عامة وليس تشخيصًا طبيًا")
+
+st.warning("⚠️ هذا النظام معلومات عامة وليس تشخيص طبي")
 
 # ---------------- MODEL ----------------
 @st.cache_resource
 def load_model():
-    return pipeline("text2text-generation", model="google/flan-t5-base")
+    model_name = "facebook/blenderbot-400M-distill"
 
-model = load_model()
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
-# ---------------- HISTORY ----------------
-HISTORY_FILE = "history.json"
+    return tokenizer, model
 
-def load_history():
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+tokenizer, model = load_model()
 
-def save_history(data):
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+symptoms = st.text_area("🧾 اكتب الأعراض:")
 
-history = load_history()
-
-# ---------------- UI ----------------
-symptoms = st.text_area("🧾 اكتب الأعراض:", placeholder="مثال: صداع، حرارة، كحة")
-
-col1, col2 = st.columns(2)
-
-# ---------------- FUNCTION ----------------
+# ---------------- ANALYSIS ----------------
 def analyze(symptoms):
     prompt = f"""
 أنت مساعد طبي ذكي.
-
-المطلوب:
-1- تحديد نوع الحالة (تنفسية / هضمية / عصبية / جلدية / أخرى)
-2- ذكر أسباب محتملة
-3- تحديد مستوى الخطورة (خفيف / متوسط / طارئ)
-4- نصيحة عامة
+حلل الأعراض التالية واذكر احتمالات عامة فقط.
+لا تقدم تشخيص نهائي.
 
 الأعراض: {symptoms}
-
-اكتب الإجابة باللغة العربية الفصحى بشكل منظم.
 """
 
-    result = model(prompt, max_new_tokens=200)[0]["generated_text"]
-    return result
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
+
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=120
+    )
+
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 # ---------------- RUN ----------------
-if st.button("🔍 تحليل الأعراض"):
-
-    if symptoms.strip() == "":
-        st.warning("من فضلك اكتب الأعراض")
+if st.button("تحليل"):
+    if not symptoms.strip():
+        st.warning("اكتب الأعراض أولاً")
     else:
         result = analyze(symptoms)
 
@@ -73,20 +56,3 @@ if st.button("🔍 تحليل الأعراض"):
         tts.save(audio_file)
 
         st.audio(audio_file)
-
-        # 🗂️ حفظ التاريخ
-        history.append({
-            "symptoms": symptoms,
-            "result": result
-        })
-        save_history(history)
-
-# ---------------- HISTORY UI ----------------
-st.sidebar.title("📜 تاريخ الحالات")
-
-for item in reversed(history[-10:]):
-    st.sidebar.markdown("-----")
-    st.sidebar.write("🧾 الأعراض:")
-    st.sidebar.write(item["symptoms"])
-    st.sidebar.write("📋 النتيجة:")
-    st.sidebar.write(item["result"])
