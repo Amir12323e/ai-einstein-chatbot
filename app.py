@@ -35,7 +35,9 @@ def analyze(symptoms):
 
     outputs = model.generate(
         **inputs,
-        max_new_tokens=120
+        max_new_tokens=120,
+        do_sample=False,
+        num_beams=4
     )
 
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
