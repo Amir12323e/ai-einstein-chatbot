@@ -9,7 +9,16 @@ generator = pipeline("text-generation", model="gpt2")
 
 def chat(question):
     prompt = f"You are Albert Einstein. Answer wisely: {question}"
-    result = generator(prompt, max_length=200)
+    
+    result = generator(
+        prompt,
+        max_length=100,
+        do_sample=True,
+        temperature=0.7,
+        top_k=50,
+        top_p=0.9
+    )
+    
     return result[0]['generated_text']
 
 question = st.text_input("Ask Einstein:")
