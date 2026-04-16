@@ -1,42 +1,40 @@
 import streamlit as st
 from transformers import pipeline
 from gtts import gTTS
-import os
+import uuid
 
 st.title("🧠 أينشتاين الذكي")
 
 question = st.text_input("اسأل أينشتاين:")
 
-generator = pipeline("text-generation", model="gpt2")
+@st.cache_resource
+def load_model():
+    return pipeline("text-generation", model="aubmindlab/aragpt2-base")
+
+generator = load_model()
 
 def chat(question):
-    if question.strip() == "":
+    if not question.strip():
         return "من فضلك اكتب سؤال"
 
-    prompt = f"""
-    أنت العالم ألبرت أينشتاين.
-    أجب على السؤال التالي باللغة العربية بأسلوب بسيط وذكي:
-
-    السؤال: {question}
-    """
+    prompt = f"أجب بشكل ذكي وبسيط:\nالسؤال: {question}\nالإجابة:"
 
     result = generator(
         prompt,
-        max_length=120,
+        max_new_tokens=80,
         do_sample=True,
         temperature=0.7,
-        top_k=50,
         top_p=0.9
     )
 
-    return result[0]['generated_text']
-
-question = st.text_input("Ask Einstein:")
+    return result[0]["generated_text"]
 
 if st.button("Ask"):
     answer = chat(question)
     st.write(answer)
 
+    filename = f"voice_{uuid.uuid4().hex}.mp3"
     tts = gTTS(answer, lang='ar')
-    tts.save("voice.mp3")
-    st.audio("voice.mp3")
+    tts.save(filename)
+
+    st.audio(filename)
