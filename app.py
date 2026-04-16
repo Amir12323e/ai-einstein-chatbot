@@ -1,15 +1,18 @@
 import streamlit as st
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
-st.title("🧠 محادثة مع الشخصيات التاريخية")
-
-# تحميل النموذج مرة واحدة
 @st.cache_resource
 def load_model():
-    return pipeline("text2text-generation", model="google/flan-t5-base")
+    model_name = "google/flan-t5-base"
 
-model = load_model()
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
+    return pipeline(
+        "text2text-generation",
+        model=model,
+        tokenizer=tokenizer
+    )
 # اختيار الشخصية
 persona = st.selectbox(
     "اختر الشخصية:",
