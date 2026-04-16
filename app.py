@@ -1,40 +1,50 @@
 import streamlit as st
 from transformers import pipeline
-from gtts import gTTS
-import uuid
 
-st.title("🧠 أينشتاين الذكي")
+st.title("🧠 محادثة مع الشخصيات التاريخية")
 
-question = st.text_input("اسأل أينشتاين:")
-
+# تحميل النموذج مرة واحدة
 @st.cache_resource
 def load_model():
-    return pipeline("text-generation", model="aubmindlab/aragpt2-base")
+    return pipeline("text2text-generation", model="google/flan-t5-base")
 
-generator = load_model()
+model = load_model()
 
-def chat(question):
+# اختيار الشخصية
+persona = st.selectbox(
+    "اختر الشخصية:",
+    [
+        "ألبرت أينشتاين",
+        "نيوتن",
+        "صلاح الدين الأيوبي",
+        "أرسطو",
+        "ابن سينا"
+    ]
+)
+
+question = st.text_input("اكتب سؤالك:")
+
+def ask(persona, question):
     if not question.strip():
-        return "من فضلك اكتب سؤال"
+        return "من فضلك اكتب سؤال."
 
-    prompt = f"أجب بشكل ذكي وبسيط:\nالسؤال: {question}\nالإجابة:"
+    prompt = f"""
+أنت تتحدث بصوت شخصية تاريخية اسمها {persona}.
+أجب باللغة العربية الفصحى فقط.
+كن دقيقًا ومبسطًا ولا تخترع معلومات غير صحيحة.
 
-    result = generator(
+السؤال: {question}
+الإجابة:
+"""
+
+    result = model(
         prompt,
-        max_new_tokens=80,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9
+        max_new_tokens=128
     )
 
     return result[0]["generated_text"]
 
-if st.button("Ask"):
-    answer = chat(question)
-    st.write(answer)
-
-    filename = f"voice_{uuid.uuid4().hex}.mp3"
-    tts = gTTS(answer, lang='ar')
-    tts.save(filename)
-
-    st.audio(filename)
+if st.button("اسأل"):
+    answer = ask(persona, question)
+    st.write("🧠 الإجابة:")
+    st.success(answer)
