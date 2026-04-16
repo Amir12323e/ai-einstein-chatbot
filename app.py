@@ -10,7 +10,7 @@ st.warning("⚠️ هذا النظام معلومات عامة وليس تشخي
 # ---------------- MODEL ----------------
 @st.cache_resource
 def load_model():
-    model_name = "facebook/blenderbot-400M-distill"
+    model_name = "google/flan-t5-base"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
@@ -25,17 +25,23 @@ symptoms = st.text_area("🧾 اكتب الأعراض:")
 def analyze(symptoms):
     prompt = f"""
 أنت مساعد طبي ذكي.
-حلل الأعراض التالية واذكر احتمالات عامة فقط.
-لا تقدم تشخيص نهائي.
+
+حلل الأعراض التالية طبياً بشكل عام فقط.
+اذكر:
+- احتمالات الأسباب
+- نوع الحالة
+- نصيحة عامة
 
 الأعراض: {symptoms}
+
+الإجابة باللغة العربية الفصحى فقط.
 """
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
 
     outputs = model.generate(
         **inputs,
-        max_new_tokens=120,
+        max_new_tokens=150,
         do_sample=False,
         num_beams=4
     )
