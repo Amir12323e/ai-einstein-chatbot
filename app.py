@@ -1,6 +1,8 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
+st.title("🧠 محادثة مع الشخصيات التاريخية")
+
 @st.cache_resource
 def load_model():
     model_name = "google/flan-t5-base"
@@ -13,41 +15,32 @@ def load_model():
         model=model,
         tokenizer=tokenizer
     )
-# اختيار الشخصية
+
+# ✅ مهم جدًا: تعريف model هنا
+model = load_model()
+
 persona = st.selectbox(
     "اختر الشخصية:",
-    [
-        "ألبرت أينشتاين",
-        "نيوتن",
-        "صلاح الدين الأيوبي",
-        "أرسطو",
-        "ابن سينا"
-    ]
+    ["أينشتاين", "نيوتن", "ابن سينا", "صلاح الدين الأيوبي"]
 )
 
 question = st.text_input("اكتب سؤالك:")
 
 def ask(persona, question):
     if not question.strip():
-        return "من فضلك اكتب سؤال."
+        return "اكتب سؤال من فضلك"
 
     prompt = f"""
-أنت تتحدث بصوت شخصية تاريخية اسمها {persona}.
-أجب باللغة العربية الفصحى فقط.
-كن دقيقًا ومبسطًا ولا تخترع معلومات غير صحيحة.
+أنت تمثل شخصية تاريخية اسمها {persona}.
+أجب باللغة العربية الفصحى بشكل دقيق ومختصر.
 
 السؤال: {question}
 الإجابة:
 """
 
-    result = model(
-        prompt,
-        max_new_tokens=128
-    )
-
+    result = model(prompt, max_new_tokens=128)
     return result[0]["generated_text"]
 
 if st.button("اسأل"):
     answer = ask(persona, question)
-    st.write("🧠 الإجابة:")
     st.success(answer)
