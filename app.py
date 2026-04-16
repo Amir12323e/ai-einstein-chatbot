@@ -1,11 +1,11 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-st.title("🧠 محادثة مع الشخصيات التاريخية")
+st.title("🧠 محادثة الشخصيات التاريخية")
 
 @st.cache_resource
 def load_model():
-    model_name = "google/flan-t5-base"
+    model_name = "facebook/blenderbot-400M-distill"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
@@ -25,24 +25,16 @@ def ask(persona, question):
     if not question.strip():
         return "اكتب سؤال من فضلك"
 
-    prompt = f"""
-أنت شخصية تاريخية اسمها {persona}.
-أجب باللغة العربية الفصحى بشكل دقيق ومختصر.
+    prompt = f"أنت {persona}. أجب باللغة العربية الفصحى: {question}"
 
-السؤال: {question}
-الإجابة:
-"""
-
-    inputs = tokenizer(prompt, return_tensors="pt")
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
 
     outputs = model.generate(
         **inputs,
-        max_new_tokens=128
+        max_new_tokens=100
     )
 
-    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    return answer
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 if st.button("اسأل"):
     answer = ask(persona, question)
