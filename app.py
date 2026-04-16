@@ -37,6 +37,6 @@ if st.button("Ask"):
     answer = chat(question)
     st.write(answer)
 
-   tts = gTTS(answer, lang='ar')
+    tts = gTTS(answer, lang='ar')
     tts.save("voice.mp3")
     st.audio("voice.mp3")
