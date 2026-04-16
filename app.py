@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 st.title("🧠 محادثة مع الشخصيات التاريخية")
 
@@ -10,14 +10,9 @@ def load_model():
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
-    return pipeline(
-        "text2text-generation",
-        model=model,
-        tokenizer=tokenizer
-    )
+    return tokenizer, model
 
-# ✅ مهم جدًا: تعريف model هنا
-model = load_model()
+tokenizer, model = load_model()
 
 persona = st.selectbox(
     "اختر الشخصية:",
@@ -31,15 +26,23 @@ def ask(persona, question):
         return "اكتب سؤال من فضلك"
 
     prompt = f"""
-أنت تمثل شخصية تاريخية اسمها {persona}.
+أنت شخصية تاريخية اسمها {persona}.
 أجب باللغة العربية الفصحى بشكل دقيق ومختصر.
 
 السؤال: {question}
 الإجابة:
 """
 
-    result = model(prompt, max_new_tokens=128)
-    return result[0]["generated_text"]
+    inputs = tokenizer(prompt, return_tensors="pt")
+
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=128
+    )
+
+    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    return answer
 
 if st.button("اسأل"):
     answer = ask(persona, question)
