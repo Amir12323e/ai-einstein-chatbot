@@ -1,5 +1,7 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from gtts import gTTS
+import uuid
 
 st.title("🧠 محادثة الشخصيات التاريخية")
 
@@ -25,17 +27,35 @@ def ask(persona, question):
     if not question.strip():
         return "اكتب سؤال من فضلك"
 
-    prompt = f"أنت {persona}. أجب باللغة العربية الفصحى: {question}"
+    prompt = f"""
+أنت شخصية تاريخية اسمها {persona}.
+أجب دائماً باللغة العربية الفصحى فقط.
+اجعل الإجابة واضحة وبسيطة وصحيحة قدر الإمكان.
+
+السؤال: {question}
+"""
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
 
     outputs = model.generate(
         **inputs,
-        max_new_tokens=100
+        max_new_tokens=120
     )
 
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    return answer
 
 if st.button("اسأل"):
     answer = ask(persona, question)
-    st.success(answer)
+
+    st.success("🧠 الإجابة:")
+    st.write(answer)
+
+    # 🔊 تحويل النص لصوت
+    tts = gTTS(text=answer, lang='ar')
+
+    audio_file = f"voice_{uuid.uuid4().hex}.mp3"
+    tts.save(audio_file)
+
+    st.audio(audio_file)
