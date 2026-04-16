@@ -3,7 +3,9 @@ from transformers import pipeline
 from gtts import gTTS
 import os
 
-st.title("🧠 Einstein AI Chatbot")
+st.title("🧠 أينشتاين الذكي")
+
+question = st.text_input("اسأل أينشتاين:")
 
 generator = pipeline("text-generation", model="gpt2")
 
@@ -35,6 +37,6 @@ if st.button("Ask"):
     answer = chat(question)
     st.write(answer)
 
-    tts = gTTS(answer)
+   tts = gTTS(answer, lang='ar')
     tts.save("voice.mp3")
     st.audio("voice.mp3")
